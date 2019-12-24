@@ -76,7 +76,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         main_window.show();
         let joke_update =
             SlotOfQString::new(move |name: Ref<QString>| match Event::from_qstring(name) {
-                Event::Reset => {}
                 Event::DbJokeUpdate => {
                     if let Ok(text) = receiver.recv() {
                         joke_result_label_ptr.set_text(&qs(text));
@@ -141,7 +140,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         sender
                             .send(jokes[cnt % jokes.len()].1)
                             .expect("unable to send");
-                        myobj.signal(Event::Reset);
+                        //myobj.signal(Event::Reset);
                         myobj.signal(Event::DbJokeUpdate);
                         myobj.signal(Event::DbPunchlineUpdate)
                     }
