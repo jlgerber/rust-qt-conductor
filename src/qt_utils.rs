@@ -4,10 +4,12 @@ use qt_widgets::{
     QHBoxLayout, QLabel, QVBoxLayout,
 };
 
+/// Convenience function to construct a CppBox'ed QString from a &str.
 pub fn qs<S: AsRef<str>>(input: S) -> CppBox<QString> {
     QString::from_std_str(input.as_ref())
 }
 
+/// Construct a new label
 pub fn new_label(text: Option<&'static str>) -> (CppBox<QLabel>, MutPtr<QLabel>) {
     unsafe {
         let mut label = match text {
