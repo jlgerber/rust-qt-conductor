@@ -36,12 +36,6 @@ impl Conductor {
     pub fn mut_ref(&mut self) -> Option<MutRef<QObject>> {
         unsafe { self.0.as_mut_ref() }
     }
-    // /// This is the call that we use
-    // pub fn set_object_name(&mut self, name: impl CastInto<Ref<QString>>) {
-    //     unsafe {
-    //         self.0.set_object_name(name);
-    //     }
-    // }
     /// A more structured api for  signaling. This uses set_object_name under the hood,
     /// but that is an unfortunate implementation detail.
     pub fn signal<T>(&mut self, event: T)
