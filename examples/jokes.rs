@@ -1,26 +1,21 @@
 #![windows_subsystem = "windows"]
-mod conductor;
-use conductor::Conductor;
 use qt_core::{QString, Slot, SlotOfQString};
-mod qt_utils;
-use crate::qt_utils::*;
-use std::sync::mpsc::{Receiver, Sender};
-mod traits;
+use qt_thread_conductor::{conductor::Conductor, qt_utils::qs, traits::*};
+
 use qt_widgets::{
     cpp_core::{CppBox, Ref},
     QApplication, QLabel, QMainWindow, QPushButton, QWidget,
 };
-
 mod event;
-use crate::event::*;
-
+use event::*;
+mod utils;
 use std::sync::mpsc::channel;
+use std::sync::mpsc::{Receiver, Sender};
 use std::thread::spawn;
-use traits::*;
+use utils::*;
 
 struct Form<'a> {
     _main: CppBox<QMainWindow>,
-    //_widget: CppBox<QObject>,
     joke_update: SlotOfQString<'a>,
     next_joke_slot: Slot<'a>,
 }
@@ -129,14 +124,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 //println!("recieved msg");
                 match msg {
                     Msg::NewJokeRequest => {
-                        //println!("sending joke via myobj");
                         sender
                             .send(jokes[cnt % jokes.len()].0)
                             .expect("unable to send");
                         sender
                             .send(jokes[cnt % jokes.len()].1)
                             .expect("unable to send");
-                        //myobj.signal(Event::Reset);
                         myobj.signal(Event::DbJokeUpdate);
                         myobj.signal(Event::DbPunchlineUpdate)
                     }
@@ -146,6 +139,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
         handles.push(handle);
+        // lets not let the second thread persist after we quit
         app.about_to_quit().connect(&quit_slot);
         let result = QApplication::exec();
         for handle in handles {

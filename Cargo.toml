@@ -1,5 +1,5 @@
 [package]
-name = "qt_thread_eg"
+name = "qt_thread_conductor"
 version = "0.2.0"
 authors = ["jgerber <jlgerber@gmail.com>"]
 edition = "2018"

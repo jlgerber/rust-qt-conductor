@@ -1,6 +1,7 @@
-use crate::traits::*;
 use qt_core::QString;
+use qt_thread_conductor::traits::*;
 use qt_widgets::cpp_core::{CppBox, Ref};
+
 #[derive(Debug, PartialEq)]
 pub enum Event {
     DbJokeUpdate,
