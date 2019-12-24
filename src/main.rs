@@ -48,26 +48,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // main window layout
         let (main_layout, mut main_layout_ptr) = new_vblayout();
         //
-        let (top_layout, mut top_layout_ptr) = new_hblayout();
+        let (joke_layout, mut joke_layout_ptr) = new_hblayout();
         // second level, joke layout
-        let (lowerl, mut lowerl_ptr) = new_hblayout();
+        let (punchline_layout, mut punchline_layout_ptr) = new_hblayout();
 
         let mut main_w_ptr = main_w.as_mut_ptr();
         main_w_ptr.set_layout(main_layout.into_ptr());
-        main_layout_ptr.add_layout_1a(top_layout.into_ptr());
-        main_layout_ptr.add_layout_1a(lowerl.into_ptr());
+        main_layout_ptr.add_layout_1a(joke_layout.into_ptr());
+        main_layout_ptr.add_layout_1a(punchline_layout.into_ptr());
         // top level
         let label = QLabel::from_q_string(&qs("Joke:"));
-        top_layout_ptr.add_widget(label.into_ptr());
+        joke_layout_ptr.add_widget(label.into_ptr());
         let (joke_result_label, mut joke_result_label_ptr) = new_label(None);
-
-        top_layout_ptr.add_widget(joke_result_label.into_ptr());
+        joke_layout_ptr.add_widget(joke_result_label.into_ptr());
+        joke_layout_ptr.add_stretch_1a(1);
         //joke level
         let punchline_label = QLabel::from_q_string(&qs("Answer:"));
-        lowerl_ptr.add_widget(punchline_label.into_ptr());
-        let (punchline_result_label, mut punchline_result_ptr) = new_label(None);
-        lowerl_ptr.add_widget(punchline_result_label.into_ptr());
+        punchline_layout_ptr.add_widget(punchline_label.into_ptr());
 
+        let (punchline_result_label, mut punchline_result_ptr) = new_label(None);
+        punchline_layout_ptr.add_widget(punchline_result_label.into_ptr());
+        punchline_layout_ptr.add_stretch_1a(1);
         let mut next_joke = QPushButton::from_q_string(&qs("Next Joke"));
         let next_joke_ptr = next_joke.as_mut_ptr();
         main_layout_ptr.add_widget(next_joke.into_ptr());
