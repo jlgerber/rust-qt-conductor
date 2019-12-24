@@ -1,3 +1,6 @@
+//! The Event enum will be defined on a per project basis.
+//! It should encompass all of the states which we need to
+//! differentiate between in our main thread.
 use qt_core::QString;
 use qt_thread_conductor::traits::*;
 use qt_widgets::cpp_core::{CppBox, Ref};
@@ -10,6 +13,7 @@ pub enum Event {
 
 const DDJOKEUPDATE: &'static str = "DbJokeUpdate";
 const DDPUNCHLINEUPDATE: &'static str = "DbPunchlineUpdate";
+
 impl ToQString for Event {
     fn to_qstring(&self) -> CppBox<QString> {
         match &self {

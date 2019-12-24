@@ -6,9 +6,10 @@ use qt_widgets::{
     cpp_core::{CppBox, Ref},
     QApplication, QLabel, QMainWindow, QPushButton, QWidget,
 };
-mod event;
+mod helpers;
 use event::*;
-mod utils;
+use helpers::event;
+use helpers::utils;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Receiver, Sender};
 use std::thread::spawn;
@@ -39,19 +40,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .send(Msg::Quit)
             .expect("couldn't send");
     });
+
     QApplication::init(|app| unsafe {
         // create main window
         let mut main_window = QMainWindow::new_0a();
-        let mut main_w = QWidget::new_0a();
+        let mut main_widget = QWidget::new_0a();
         // main window layout
         let (main_layout, mut main_layout_ptr) = new_vblayout();
-        //
+        // horizontal box layout holding the joke label and joke
         let (joke_layout, mut joke_layout_ptr) = new_hblayout();
-        // second level, joke layout
+        // horizontal box layout holding the puchline label and punchline
         let (punchline_layout, mut punchline_layout_ptr) = new_hblayout();
 
-        let mut main_w_ptr = main_w.as_mut_ptr();
-        main_w_ptr.set_layout(main_layout.into_ptr());
+        main_widget.set_layout(main_layout.into_ptr());
         main_layout_ptr.add_layout_1a(joke_layout.into_ptr());
         main_layout_ptr.add_layout_1a(punchline_layout.into_ptr());
         // top level
@@ -71,7 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let next_joke_ptr = next_joke.as_mut_ptr();
         main_layout_ptr.add_widget(next_joke.into_ptr());
 
-        main_window.set_central_widget(main_w.into_ptr());
+        main_window.set_central_widget(main_widget.into_ptr());
         main_window.show();
         //
         // Slot to receive conductor singals

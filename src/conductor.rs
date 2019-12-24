@@ -69,8 +69,13 @@ where
     /// Fire a signal for an event of type T (where T is ToQString + FromQString )
     ///
     /// # Arguments
-    /// * `event` - an instance of type T. Typically, this will be an enum that exposes
-    /// all of the states that we wish to respond to in the main thread
+    /// * `event` - an instance of type T, which can convert to and from a QString.
+    /// Our signal has a single argument of type QString. Rather than sling around
+    /// ad hoc strings, Conductor expects the user to define an enum which implements
+    /// ToQString and FromQString, so that the user gains the benefits of strict typing
+    /// at compile time.
+    /// Typically, the user will define an Event that impls ToQString and FromQString
+    /// and  that exposes all of the states that we wish to respond to in the main thread
     pub fn signal(&mut self, event: T) {
         unsafe {
             // turns out that qt keeps track of the name and only emits a
