@@ -28,8 +28,11 @@ enum Msg {
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut handles = Vec::new();
+    // sender, receiver for communicating from secondary thread to primary ui thread
     let (sender, receiver) = channel();
+    // sender and receiver for communicating from ui thread to secondary thread
     let (to_thread_sender, to_thread_receiver): (Sender<Msg>, Receiver<Msg>) = channel();
+    // sender to handle quitting
     let to_thread_sender_quit = to_thread_sender.clone();
     let quit_slot = Slot::new(move || {
         to_thread_sender_quit
@@ -70,6 +73,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         main_window.set_central_widget(main_w.into_ptr());
         main_window.show();
+        //
+        // Slot to receive conductor singals
+        //
+        /*
+        We match on our Event and pull data out of our channel using the receiver
+        */
         let joke_update =
             SlotOfQString::new(move |name: Ref<QString>| match Event::from_qstring(name) {
                 Event::DbJokeUpdate => {
