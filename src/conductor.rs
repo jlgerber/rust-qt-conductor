@@ -1,13 +1,25 @@
 use crate::qt_utils::qs;
 use crate::traits::ToQString;
-use qt_core::QObject;
-use qt_widgets::cpp_core::{CppBox, MutPtr, MutRef, Ptr};
+use qt_core::{QObject, SlotOfQString};
+use qt_widgets::cpp_core::{CppBox, MutRef, Ptr};
 const RESET: &'static str = "_RESET_CONDUCTOR_";
+
 /// Conductor has one Purpose and one purpose only:
-/// to facilitate communication between threads in qt.
-#[derive(Debug, Clone)]
+/// to facilitate communication with qt from other thread(s).
+///
+/// The Conductor instance should be instantiated with a reference
+/// to a SlotOfQString, whose role it is to respond to Conductor signals.
+///
+/// The Conductor should typically be moved into a separate thread. Where
+/// it should be used to instigate change in the aforementioned SlotOfQString.
+///
+/// One should note that the Conductor::signal's event will typically not
+/// be flexible enough to communicate ui state changes. It is recommended
+/// to use channels to send and receive UI state changes, followed by a
+/// call to conductor.signal(event). See the example for more details.
+#[derive(Debug)]
 pub struct Conductor<T: ToQString + std::cmp::PartialEq> {
-    inner: MutPtr<QObject>,
+    inner: CppBox<QObject>,
     last: Option<T>,
 }
 
@@ -19,35 +31,46 @@ impl<T> Conductor<T>
 where
     T: ToQString + std::cmp::PartialEq,
 {
-    /// new up a Conductor
+    /// New up a QObject and Conductor
+    ///
+    /// # Argument
+    /// * slotOfQString reference. This is the slot that we will be updating
+    /// when we call Self::signal
+    ///
+    /// # Returns
+    /// * new Conductor instance
+    pub fn new<'a>(slot: &SlotOfQString<'a>) -> Self {
+        unsafe {
+            let qobj = QObject::new_0a();
+            qobj.object_name_changed().connect(slot);
+            Self::from_q_object(qobj)
+        }
+    }
+    // new up a Conductor from a box'ed QObject
     #[allow(dead_code)]
-    pub fn from_q_object(object: MutPtr<QObject>) -> Self {
+    fn from_q_object(object: CppBox<QObject>) -> Self {
         Self {
             inner: object,
             last: None,
         }
     }
-    /// New up a QObject and Conductor
-    ///
-    /// The QObject's  set_object_name is used
-    pub fn new() -> (CppBox<QObject>, Self) {
-        unsafe {
-            let mut qobj = QObject::new_0a();
-            let qobj_ptr = qobj.as_mut_ptr();
-            (qobj, Self::from_q_object(qobj_ptr))
-        }
-    }
 
     #[allow(dead_code)]
+    /// Retrieve a Ptr wrapping our inner QObject
     pub fn ptr(&self) -> Ptr<QObject> {
         unsafe { self.inner.as_ptr() }
     }
+
     #[allow(dead_code)]
-    pub fn mut_ref(&mut self) -> Option<MutRef<QObject>> {
+    /// Retrieve a mutable pointer wrapping our inner QObject
+    pub fn mut_ref(&mut self) -> MutRef<QObject> {
         unsafe { self.inner.as_mut_ref() }
     }
-    /// A more structured api for  signaling. This uses set_object_name under the hood,
-    /// but that is an unfortunate implementation detail.
+    /// Fire a signal for an event of type T (where T is ToQString + FromQString )
+    ///
+    /// # Arguments
+    /// * `event` - an instance of type T. Typically, this will be an enum that exposes
+    /// all of the states that we wish to respond to in the main thread
     pub fn signal(&mut self, event: T) {
         unsafe {
             // turns out that qt keeps track of the name and only emits a

@@ -1,7 +1,7 @@
 #![windows_subsystem = "windows"]
 mod conductor;
 use conductor::Conductor;
-use qt_core::{QObject, QString, Slot, SlotOfQString};
+use qt_core::{QString, Slot, SlotOfQString};
 mod qt_utils;
 use crate::qt_utils::*;
 use std::sync::mpsc::{Receiver, Sender};
@@ -20,7 +20,7 @@ use traits::*;
 
 struct Form<'a> {
     _main: CppBox<QMainWindow>,
-    _widget: CppBox<QObject>,
+    //_widget: CppBox<QObject>,
     joke_update: SlotOfQString<'a>,
     next_joke_slot: Slot<'a>,
 }
@@ -93,18 +93,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .send(Msg::NewJokeRequest)
                 .expect("couldn't send");
         });
-        let (myobject, mut myobj) = Conductor::new();
         let mut _form = Form {
             _main: main_window,
-            _widget: myobject,
             joke_update: joke_update,
             next_joke_slot,
         };
+        let mut myobj = Conductor::new(&_form.joke_update);
         next_joke_ptr.clicked().connect(&_form.next_joke_slot);
-        myobj
-            .ptr()
-            .object_name_changed()
-            .connect(&_form.joke_update);
         let handle = spawn(move || {
             let mut cnt = 0;
             let jokes = vec![
