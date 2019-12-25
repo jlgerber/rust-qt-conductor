@@ -5,18 +5,32 @@ use qt_widgets::cpp_core::{CppBox, MutRef, Ptr};
 const RESET: &'static str = "_RESET_CONDUCTOR_";
 
 /// Conductor has one Purpose and one purpose only:
-/// to facilitate communication with qt from other thread(s).
+/// enable communication with rust-qt from other thread(s). The primary
+/// use case for Conductor is to support long running qeries or computations without
+/// blocking the main ui thread.
 ///
-/// The Conductor instance should be instantiated with a reference
+/// The Conductor struct should be instantiated with a reference
 /// to a SlotOfQString, whose role it is to respond to Conductor signals.
 ///
-/// The Conductor should typically be moved into a separate thread. Where
-/// it should be used to instigate change in the aforementioned SlotOfQString.
+/// During instantiation, Conductor connects its signal to the SlotOfQString Slot.
+/// Subsequent calls to `Conductor::signal` will emit a Qt Signal, and ultimately
+/// fire off the aforementioned Slot.
 ///
-/// One should note that the Conductor::signal's event will typically not
-/// be flexible enough to communicate ui state changes. It is recommended
-/// to use channels to send and receive UI state changes, followed by a
-/// call to conductor.signal(event). See the example for more details.
+/// Afer instantiation, the Conductor instance should typically be moved
+/// into a separate thread, where it should be used signal change.  Bi-directional
+/// communication between the main thread and the secondary thread would generally
+/// involve one or more channels for each direction (see `std::sync::mpsc::channel`).
+///
+/// A typical usage pattern would be to define a sender,receiver pair for each
+/// direction of communication and type of data. In the SlotOfQString, one would
+/// match against the incoming QString, and pull data out of the appropriate
+/// receiver.
+///
+/// In the secondary thread, one would loop over received values from the
+/// incoming channel, peform appropriate work, including sending data over
+/// the channel sender, and ultimately calling `conductor.signal()` with the
+/// appropriate value. (hopefully a variant of an enum implementing ToQString and
+/// FromQString).
 #[derive(Debug)]
 pub struct Conductor<T: ToQString + std::cmp::PartialEq> {
     inner: CppBox<QObject>,
