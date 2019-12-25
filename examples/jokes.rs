@@ -9,10 +9,13 @@ use qt_widgets::{
 mod helpers;
 use event::*;
 use helpers::event;
+use helpers::msg::Msg;
 use helpers::utils;
 use std::sync::mpsc::channel;
 use std::sync::mpsc::{Receiver, Sender};
+use std::thread::sleep;
 use std::thread::spawn;
+use std::time::Duration;
 use utils::*;
 
 struct Form<'a> {
@@ -20,13 +23,65 @@ struct Form<'a> {
     joke_update: SlotOfQString<'a>,
     next_joke_slot: Slot<'a>,
 }
-
-#[derive(Debug)]
-enum Msg {
-    NewJokeRequest,
-    Quit,
-}
-
+const JOKES: &[(&'static str, &'static str)] = &[
+    (
+        "What do you call a dinosaur that is sleeping?",
+        "A dino-snore!",
+    ),
+    ("What is fast, loud, and crunchy?", "A rocket chip"),
+    (
+        "Why did the teddy bear say no to desert?",
+        "Because she was stuffed!",
+    ),
+    ("What has ears but cannot hear?", "A cornfield"),
+    (
+        "What did the right eye say to the left eye?",
+        "Between you and me, something smells.",
+    ),
+    (
+        "What do you get when you cross a vampire and a snowman?",
+        "frost bite",
+    ),
+    (
+        "Why did the student eat his homework?",
+        "Because the teacher told her it was a piece of cake.",
+    ),
+    (
+        "What is brown, hairy, and wears sun glasses?",
+        "A coconut on vacation.",
+    ),
+    (
+        "What did the dalmation say after lunch?",
+        "That hit the spot",
+    ),
+    ("Why was 6 affraid of 7?", "Because 7,8,9"),
+    ("when does a joke become a dad joke?", "When it's a parent"),
+    (
+        "What did the limestone say to the geologist?",
+        "Dont take me for granite!",
+    ),
+    ("What kind of tree fits in your hand?", "A plam tree"),
+    (
+        "What did the baby corn say to the momma corn?",
+        "Where is pop corn?",
+    ),
+    (
+        "What is worse than raining cats and dogs?",
+        "Hailing taxies",
+    ),
+    (
+        "What building in New York City has the most stories?",
+        "The public library",
+    ),
+    (
+        "What is worse than finding a work in your apple?",
+        "Finding half a worm in your apple.",
+    ),
+    (
+        "Where did these jokes come from?",
+        "Here: https://redtri.com/best-jokes-for-kids/slide/2",
+    ),
+];
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut handles = Vec::new();
     // sender, receiver for communicating from secondary thread to primary ui thread
@@ -85,6 +140,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Event::DbJokeUpdate => {
                     if let Ok(text) = receiver.recv() {
                         joke_result_label_ptr.set_text(&qs(text));
+                        // since we may delay updating the punchline for "dramatic effect",
+                        // we zero
+                        punchline_result_ptr.set_text(&qs(""));
                     }
                 }
                 Event::DbPunchlineUpdate => {
@@ -107,40 +165,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         next_joke_ptr.clicked().connect(&_form.next_joke_slot);
         let handle = spawn(move || {
             let mut cnt = 0;
-            let jokes = vec![
-                (
-                    "What do you call a dinosaur that is sleeping?",
-                    "A dino-snore!",
-                ),
-                ("What is fast, loud, and crunchy?", "A rocket chip"),
-                (
-                    "Why did the teddy bear say no to desert?",
-                    "Because she was stuffed!",
-                ),
-                ("What has ears but cannot hear?", "A cornfield"),
-                (
-                    "What did the right eye say to the left eye?",
-                    "Between you and me, something smells.",
-                ),
-                (
-                    "What do you get when you cross a vampire and a snowman?",
-                    "frost bite",
-                ),
-            ];
             loop {
                 let msg = to_thread_receiver
                     .recv()
                     .expect("Unable to unwrap received msg");
-                //println!("recieved msg");
                 match msg {
                     Msg::NewJokeRequest => {
+                        // notice that there doesnt have to be a
+                        // one to one relationship between incoming message
+                        // and outgoing message. Here, we send
+                        // data twice, and then issue two signals
                         sender
-                            .send(jokes[cnt % jokes.len()].0)
-                            .expect("unable to send");
-                        sender
-                            .send(jokes[cnt % jokes.len()].1)
+                            .send(JOKES[cnt % JOKES.len()].0)
                             .expect("unable to send");
                         myobj.signal(Event::DbJokeUpdate);
+                        // lets sleep a bit. Notice that this blocks...
+                        // If you press the button, it wont do anything
+                        // until we wake
+                        sleep(Duration::from_millis(1000));
+                        // Now we provide the punchline
+                        sender
+                            .send(JOKES[cnt % JOKES.len()].1)
+                            .expect("unable to send");
                         myobj.signal(Event::DbPunchlineUpdate)
                     }
                     Msg::Quit => return,
