@@ -2,7 +2,7 @@ use crate::qt_utils::qs;
 use crate::traits::ToQString;
 use qt_core::{QObject, SlotOfQString};
 use qt_widgets::cpp_core::{CppBox, MutRef, Ptr};
-const RESET: &'static str = "_RESET_CONDUCTOR_";
+pub const RESET: &'static str = "_RESET_CONDUCTOR_";
 
 /// Conductor has one Purpose and one purpose only:
 /// enable communication with rust-qt from other thread(s). The primary

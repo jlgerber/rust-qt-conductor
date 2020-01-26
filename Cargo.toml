@@ -1,6 +1,6 @@
 [package]
 name = "qt_thread_conductor"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["jgerber <jlgerber@gmail.com>"]
 edition = "2018"
 
@@ -9,4 +9,5 @@ qt_core = "0.4.1"
 qt_gui = "0.4.1"
 qt_widgets = "0.4.1"
 qt_ui_tools = "0.4.1"
+structopt = "0.3.8"
 
